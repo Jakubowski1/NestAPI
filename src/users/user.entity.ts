@@ -1,4 +1,5 @@
-import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
+import { Post } from '../posts/post.entity';
 
 @Entity()
 export class User {
@@ -6,8 +7,14 @@ export class User {
   id: number;
 
   @Column()
-  name : string;
+  username: string;
 
   @Column()
-  email: string;
+  password: string;
+
+  @Column({ default: 'user' })  // Default role is 'user'
+  role: string;
+
+  @OneToMany(() => Post, post => post.user)
+  posts: Post[];
 }

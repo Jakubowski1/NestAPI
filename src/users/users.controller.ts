@@ -1,9 +1,27 @@
-import { Controller, Get, Post, Body, Param, Delete, Put, NotFoundException, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Delete,
+  Put,
+  NotFoundException,
+  UseGuards
+} from '@nestjs/common';
 import { UsersService } from './users.service';
 import { User as UserEntity } from './user.entity';
-import { ApiTags, ApiOperation, ApiParam, ApiBody,  ApiBearerAuth  } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiParam,
+  ApiBody,
+  ApiBearerAuth
+} from '@nestjs/swagger';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
+import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @ApiTags('users')
 @Controller('users')
@@ -12,7 +30,6 @@ import { Roles } from '../auth/roles.decorator';
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  // Get all users
   @Get()
   @Roles('admin')
   @ApiOperation({ summary: 'Get all users' })
@@ -20,7 +37,6 @@ export class UsersController {
     return await this.usersService.findAll();
   }
 
-  // Get one user
   @Get(':id')
   @Roles('admin')
   @ApiOperation({ summary: 'Get a user by ID' })
@@ -33,38 +49,37 @@ export class UsersController {
     return user;
   }
 
-  // Create user with signup
-  @Post('/signup')
-  @ApiOperation({ summary: 'Create a new user' })
-  @ApiBody({ type: UserEntity })
-  async signUp(@Body() user: UserEntity): Promise<UserEntity> {
-    return await this.usersService.create(user);
-  }
-
-  // Create user
   @Post()
   @Roles('admin')
   @ApiOperation({ summary: 'Create a new user' })
-  @ApiBody({ type: UserEntity })
-  async create(@Body() user: UserEntity): Promise<UserEntity> {
-    return await this.usersService.create(user);
+  @ApiBody({ type: CreateUserDto })
+  async create(@Body() createUserDto: CreateUserDto): Promise<UserEntity> {
+    const newUser = new UserEntity();
+    newUser.username = createUserDto.username;
+    newUser.password = createUserDto.password;
+    newUser.role = createUserDto.role;
+    return await this.usersService.create(newUser);
   }
 
-  // Update user
   @Put(':id')
   @Roles('admin')
   @ApiOperation({ summary: 'Update a user' })
   @ApiParam({ name: 'id', type: 'number' })
-  @ApiBody({ type: UserEntity })
-  async update(@Param('id') id: number, @Body() user: UserEntity): Promise<UserEntity> {
-    const updatedUser = await this.usersService.update(id, user);
-    if (!updatedUser) {
+  @ApiBody({ type: UpdateUserDto })
+  async update(
+    @Param('id') id: number,
+    @Body() updateUserDto: UpdateUserDto
+  ): Promise<UserEntity> {
+    const existingUser = await this.usersService.findOne(id);
+    if (!existingUser) {
       throw new NotFoundException('User not found');
     }
-    return updatedUser;
+    if (updateUserDto.username) existingUser.username = updateUserDto.username;
+    if (updateUserDto.password) existingUser.password = updateUserDto.password;
+    if (updateUserDto.role) existingUser.role = updateUserDto.role;
+    return await this.usersService.update(id, existingUser);
   }
 
-  // Delete user
   @Delete(':id')
   @Roles('admin')
   @ApiOperation({ summary: 'Delete a user' })

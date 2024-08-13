@@ -15,12 +15,11 @@ export class PostsService {
   }
 
   async findOne(id: number): Promise<Post> {
-    return await this.postRepository.findOne({ where: { id }, relations: ['user'] });
+    return await this.postRepository.findOne({ where: { id },  relations: ['user']  });
   }
 
-  async create(userId: number, post: Post): Promise<Post> {
-    const newPost = this.postRepository.create({ ...post, userId });
-    return await this.postRepository.save(newPost);
+  async create(post: Post): Promise<Post> {
+    return await this.postRepository.save(post);
   }
 
   async update(id: number, post: Post): Promise<Post> {

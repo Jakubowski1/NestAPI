@@ -1,18 +1,117 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { PostsService } from './posts.service';
+import { Post } from './post.entity';
+import { getRepositoryToken } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 
 describe('PostsService', () => {
   let service: PostsService;
+  let repository: Repository<Post>;
+
+  const mockUser = {
+    id: 1,
+    username: 'testuser',
+    password: 'testpassword',
+    role: 'user',
+    posts: [],
+  };
+
+  const mockPost: Post = {
+    id: 1,
+    title: 'Test Post',
+    content: 'Test Content',
+    userId: mockUser.id,
+    user: mockUser,
+  };
+
+  // Correctly mock the repository methods with jest.fn()
+  const mockPostRepository = {
+    find: jest.fn().mockResolvedValue([mockPost]),
+    findOne: jest.fn().mockResolvedValue(mockPost),
+    save: jest.fn().mockResolvedValue(mockPost),
+    update: jest.fn().mockResolvedValue({ affected: 1 }),
+    delete: jest.fn().mockResolvedValue({ affected: 1 }),
+  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [PostsService],
+      providers: [
+        PostsService,
+        {
+          provide: getRepositoryToken(Post),
+          useValue: mockPostRepository,
+        },
+      ],
     }).compile();
 
     service = module.get<PostsService>(PostsService);
+    repository = module.get<Repository<Post>>(getRepositoryToken(Post));
   });
 
   it('should be defined', () => {
     expect(service).toBeDefined();
+  });
+
+  describe('findAll', () => {
+    it('should return an array of posts', async () => {
+      const result = await service.findAll();
+      expect(result).toEqual([mockPost]);
+      expect(repository.find).toHaveBeenCalledWith({ relations: ['user'] });
+    });
+  });
+
+  describe('findOne', () => {
+    it('should return a single post', async () => {
+      const result = await service.findOne(1);
+      expect(result).toEqual(mockPost);
+      expect(repository.findOne).toHaveBeenCalledWith({
+        where: { id: 1 },
+        relations: ['user'],
+      });
+    });
+
+    it('should return null if no post is found', async () => {
+      (repository.findOne as jest.Mock).mockResolvedValue(null); // Simulate no post found
+      const result = await service.findOne(999);
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('create', () => {
+    it('should successfully insert a post', async () => {
+      const result = await service.create(mockPost);
+      expect(result).toEqual(mockPost);
+      expect(repository.save).toHaveBeenCalledWith(mockPost);
+    });
+  });
+
+  describe('update', () => {
+    it('should successfully update a post', async () => {
+      const updatedPost = { ...mockPost, title: 'Updated Title' };
+      (repository.findOne as jest.Mock).mockResolvedValue(updatedPost); // Simulate finding the updated post
+
+      const result = await service.update(1, updatedPost);
+      expect(result.title).toEqual('Updated Title');
+      expect(repository.update).toHaveBeenCalledWith(1, updatedPost);
+      expect(repository.findOne).toHaveBeenCalledWith({
+        where: { id: 1 },
+        relations: ['user'],
+      });
+    });
+
+    it('should return null if the post to update is not found', async () => {
+      (repository.findOne as jest.Mock).mockResolvedValue(null); // Simulate no post found
+
+      const updatedPost = await service.update(999, { ...mockPost, title: 'Updated Title' });
+      expect(updatedPost).toBeNull();
+    });
+  });
+
+  describe('delete', () => {
+    it('should successfully delete a post', async () => {
+      const result = await service.delete(1);
+      expect(result).toBeUndefined();
+      expect(repository.delete).toHaveBeenCalledWith(1);
+    });
   });
 });

@@ -26,7 +26,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     const secret = this.configService.get<string>('JWT_SECRET');
     try {
       const payload = this.jwtService.verify(token, { secret });
-      request.user = payload;
+      request.user = payload; 
     } catch (error) {
       throw new UnauthorizedException('Invalid token');
     }

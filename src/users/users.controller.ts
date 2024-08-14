@@ -50,7 +50,7 @@ export class UsersController {
     const user = await this.usersService.findOne(id);
     if (!user) {
       this.logger.warn(`User with ID: ${id} not found`);
-      throw new UserNotFoundException(id);  // Use custom exception
+      throw new UserNotFoundException(id);  
     }
     return user;
   }
@@ -81,8 +81,8 @@ export class UsersController {
     const existingUser = await this.usersService.findOne(id);
     if (!existingUser) {
       this.logger.warn(`User with ID: ${id} not found`);
-      throw new UserNotFoundException(id);  // Use custom exception
-    }
+      throw new UserNotFoundException(id);  
+        }
     if (updateUserDto.username) existingUser.username = updateUserDto.username;
     if (updateUserDto.password) existingUser.password = updateUserDto.password;
     if (updateUserDto.role) existingUser.role = updateUserDto.role;

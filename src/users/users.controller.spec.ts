@@ -4,7 +4,7 @@ import { UsersService } from './users.service';
 import { User as UserEntity } from './user.entity';
 import { UserNotFoundException } from '../exceptions/custom-exceptions';
 import { RolesGuard } from '../auth/roles.guard';
-import { WinstonLoggerService } from '../logger/logger.service';  // Import the logger service
+import { WinstonLoggerService } from '../logger/logger.service';  
 
 describe('UsersController', () => {
   let usersController: UsersController;
@@ -41,7 +41,7 @@ describe('UsersController', () => {
           useValue: mockUsersService,
         },
         {
-          provide: WinstonLoggerService,  // Provide the mock logger service
+          provide: WinstonLoggerService,  
           useValue: mockLoggerService,
         },
       ],

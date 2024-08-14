@@ -84,7 +84,7 @@ describe('PostsService', () => {
     });
 
     it('should return null if no post is found', async () => {
-      (repository.findOne as jest.Mock).mockResolvedValue(null); // Simulate no post found
+      (repository.findOne as jest.Mock).mockResolvedValue(null); 
       const result = await service.findOne(999);
       expect(result).toBeNull();
       expect(mockLoggerService.warn).toHaveBeenCalledWith('Post with ID: 999 not found');
@@ -103,7 +103,7 @@ describe('PostsService', () => {
   describe('update', () => {
     it('should successfully update a post', async () => {
       const updatedPost = { ...mockPost, title: 'Updated Title' };
-      (repository.findOne as jest.Mock).mockResolvedValue(updatedPost); // Simulate finding the updated post
+      (repository.findOne as jest.Mock).mockResolvedValue(updatedPost); 
 
       const result = await service.update(1, updatedPost);
       expect(result.title).toEqual('Updated Title');
@@ -116,7 +116,7 @@ describe('PostsService', () => {
     });
 
     it('should return null if the post to update is not found', async () => {
-      (repository.findOne as jest.Mock).mockResolvedValue(null); // Simulate no post found
+      (repository.findOne as jest.Mock).mockResolvedValue(null); 
 
       const updatedPost = await service.update(999, { ...mockPost, title: 'Updated Title' });
       expect(updatedPost).toBeNull();

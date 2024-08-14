@@ -3,14 +3,14 @@ import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../users/users.service';
 import * as bcrypt from 'bcryptjs';
 import { User } from '../users/user.entity';
-import { WinstonLoggerService } from '../logger/logger.service';  // Import the logger service
+import { WinstonLoggerService } from '../logger/logger.service';  
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
-    private readonly logger: WinstonLoggerService,  // Inject the logger service
+    private readonly logger: WinstonLoggerService,  
   ) {}
 
   async validateUser(username: string, pass: string): Promise<any> {

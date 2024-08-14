@@ -2,14 +2,14 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Post } from './post.entity';
-import { WinstonLoggerService } from '../logger/logger.service'; // Import the logger service
+import { WinstonLoggerService } from '../logger/logger.service'; 
 
 @Injectable()
 export class PostsService {
   constructor(
     @InjectRepository(Post)
     private readonly postRepository: Repository<Post>,
-    private readonly logger: WinstonLoggerService,  // Inject the logger service
+    private readonly logger: WinstonLoggerService,  
   ) {}
 
   async findAll(): Promise<Post[]> {

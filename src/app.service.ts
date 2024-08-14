@@ -1,4 +1,3 @@
-// src/app.service.ts
 import { Injectable, OnModuleInit } from '@nestjs/common';
 
 import { UsersService } from './users/users.service';

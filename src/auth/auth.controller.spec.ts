@@ -4,8 +4,7 @@ import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './local-auth.guard';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { WinstonLoggerService } from '../logger/logger.service';
-import { User } from 'src/users/user.entity'; // Import the logger service
-
+import { User } from 'src/users/user.entity'; 
 describe('AuthController', () => {
   let authController: AuthController;
   let authService: AuthService;
@@ -30,7 +29,7 @@ describe('AuthController', () => {
           useValue: mockAuthService,
         },
         {
-          provide: WinstonLoggerService, // Provide the mock logger service
+          provide: WinstonLoggerService, 
           useValue: mockLoggerService,
         },
       ],

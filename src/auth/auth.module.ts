@@ -9,6 +9,7 @@ import { LocalStrategy } from './local.strategy';
 import { JwtStrategy } from './jwt.strategy';
 import { RolesGuard } from './roles.guard';
 import { APP_GUARD } from '@nestjs/core';
+import { WinstonLoggerService } from 'src/logger/logger.service';
 
 @Module({
   imports: [
@@ -31,7 +32,7 @@ import { APP_GUARD } from '@nestjs/core';
     {
       provide: APP_GUARD,
       useClass: RolesGuard,
-    },
+    }, WinstonLoggerService
   ],
   controllers: [AuthController],
   exports: [AuthService],

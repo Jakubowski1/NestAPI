@@ -9,6 +9,8 @@ import { AuthModule } from './auth/auth.module';
 
 
 import { User } from './users/user.entity';
+import { LoggerService } from './logger/logger.service';
+import { LoggerModule } from './logger/logger.module';
 
 
 import * as cookieParser from 'cookie-parser';
@@ -34,10 +36,11 @@ import JwtCookieMiddleware from './auth/jwt-cookie.middleware';
     UsersModule,
     PostsModule,
     AuthModule,
+    LoggerModule,
     
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, LoggerService],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {

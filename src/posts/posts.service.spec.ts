@@ -3,6 +3,7 @@ import { PostsService } from './posts.service';
 import { Post } from './post.entity';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { WinstonLoggerService } from '../logger/logger.service';
 
 describe('PostsService', () => {
   let service: PostsService;
@@ -24,13 +25,18 @@ describe('PostsService', () => {
     user: mockUser,
   };
 
-  // Correctly mock the repository methods with jest.fn()
   const mockPostRepository = {
     find: jest.fn().mockResolvedValue([mockPost]),
     findOne: jest.fn().mockResolvedValue(mockPost),
     save: jest.fn().mockResolvedValue(mockPost),
     update: jest.fn().mockResolvedValue({ affected: 1 }),
     delete: jest.fn().mockResolvedValue({ affected: 1 }),
+  };
+
+  const mockLoggerService = {
+    log: jest.fn(),
+    error: jest.fn(),
+    warn: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -40,6 +46,10 @@ describe('PostsService', () => {
         {
           provide: getRepositoryToken(Post),
           useValue: mockPostRepository,
+        },
+        {
+          provide: WinstonLoggerService,
+          useValue: mockLoggerService,
         },
       ],
     }).compile();
@@ -57,6 +67,8 @@ describe('PostsService', () => {
       const result = await service.findAll();
       expect(result).toEqual([mockPost]);
       expect(repository.find).toHaveBeenCalledWith({ relations: ['user'] });
+      expect(mockLoggerService.log).toHaveBeenCalledWith('Finding all posts');
+      expect(mockLoggerService.log).toHaveBeenCalledWith('Found 1 posts');
     });
   });
 
@@ -68,12 +80,14 @@ describe('PostsService', () => {
         where: { id: 1 },
         relations: ['user'],
       });
+      expect(mockLoggerService.log).toHaveBeenCalledWith('Finding post with ID: 1');
     });
 
     it('should return null if no post is found', async () => {
       (repository.findOne as jest.Mock).mockResolvedValue(null); // Simulate no post found
       const result = await service.findOne(999);
       expect(result).toBeNull();
+      expect(mockLoggerService.warn).toHaveBeenCalledWith('Post with ID: 999 not found');
     });
   });
 
@@ -82,6 +96,7 @@ describe('PostsService', () => {
       const result = await service.create(mockPost);
       expect(result).toEqual(mockPost);
       expect(repository.save).toHaveBeenCalledWith(mockPost);
+      expect(mockLoggerService.log).toHaveBeenCalledWith('Creating a new post');
     });
   });
 
@@ -97,6 +112,7 @@ describe('PostsService', () => {
         where: { id: 1 },
         relations: ['user'],
       });
+      expect(mockLoggerService.log).toHaveBeenCalledWith('Updating post with ID: 1');
     });
 
     it('should return null if the post to update is not found', async () => {
@@ -104,6 +120,7 @@ describe('PostsService', () => {
 
       const updatedPost = await service.update(999, { ...mockPost, title: 'Updated Title' });
       expect(updatedPost).toBeNull();
+      expect(mockLoggerService.warn).toHaveBeenCalledWith('Post with ID: 999 not found after update');
     });
   });
 
@@ -112,6 +129,7 @@ describe('PostsService', () => {
       const result = await service.delete(1);
       expect(result).toBeUndefined();
       expect(repository.delete).toHaveBeenCalledWith(1);
+      expect(mockLoggerService.log).toHaveBeenCalledWith('Deleting post with ID: 1');
     });
   });
 });

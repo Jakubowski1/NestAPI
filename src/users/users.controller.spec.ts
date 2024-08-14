@@ -2,8 +2,9 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
 import { User as UserEntity } from './user.entity';
-import { NotFoundException } from '@nestjs/common';
+import { UserNotFoundException } from '../exceptions/custom-exceptions';
 import { RolesGuard } from '../auth/roles.guard';
+import { WinstonLoggerService } from '../logger/logger.service';  // Import the logger service
 
 describe('UsersController', () => {
   let usersController: UsersController;
@@ -25,6 +26,12 @@ describe('UsersController', () => {
     delete: jest.fn().mockResolvedValue(undefined),
   };
 
+  const mockLoggerService = {
+    log: jest.fn(),
+    error: jest.fn(),
+    warn: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [UsersController],
@@ -32,6 +39,10 @@ describe('UsersController', () => {
         {
           provide: UsersService,
           useValue: mockUsersService,
+        },
+        {
+          provide: WinstonLoggerService,  // Provide the mock logger service
+          useValue: mockLoggerService,
         },
       ],
     })
@@ -65,7 +76,7 @@ describe('UsersController', () => {
     it('should throw NotFoundException if the user is not found', async () => {
       (usersService.findOne as jest.Mock).mockResolvedValue(null);
 
-      await expect(usersController.findOne(999)).rejects.toThrow(NotFoundException);
+      await expect(usersController.findOne(999)).rejects.toThrow(UserNotFoundException);
     });
   });
 
@@ -78,24 +89,17 @@ describe('UsersController', () => {
     });
   });
 
-  
-
   describe('delete', () => {
     it('should successfully delete a user', async () => {
-        jest.spyOn(usersService, 'findOne').mockResolvedValue(mockUser);
-      
-        const result = await usersController.delete(1);
-      
-        expect(usersService.delete).toHaveBeenCalledWith(1);
-        expect(result).toBeUndefined(); 
-      });
-      
+      jest.spyOn(usersService, 'findOne').mockResolvedValue(mockUser);
+      const result = await usersController.delete(1);
+      expect(usersService.delete).toHaveBeenCalledWith(1);
+      expect(result).toBeUndefined();
+    });
 
     it('should throw NotFoundException if user is not found during deletion', async () => {
-        jest.spyOn(usersService, 'findOne').mockResolvedValue(null);
-      
-        await expect(usersController.delete(1)).rejects.toThrow(NotFoundException);
-      });
-      
+      jest.spyOn(usersService, 'findOne').mockResolvedValue(null);
+      await expect(usersController.delete(1)).rejects.toThrow(UserNotFoundException);
+    });
   });
 });

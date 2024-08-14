@@ -1,43 +1,24 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-import { JwtAuthGuard } from './jwt-auth.guard';
 import { LocalAuthGuard } from './local-auth.guard';
-import { JwtService } from '@nestjs/jwt';
-import { ConfigService } from '@nestjs/config';
-import { User } from '../users/user.entity';
+import { JwtAuthGuard } from './jwt-auth.guard';
+import { WinstonLoggerService } from '../logger/logger.service';
+import { User } from 'src/users/user.entity'; // Import the logger service
 
 describe('AuthController', () => {
   let authController: AuthController;
   let authService: AuthService;
 
   const mockAuthService = {
-    login: jest.fn((user) => {
-      return { token: 'test-token', user };
-    }),
-    register: jest.fn((user: User) => {
-      return user;
-    }),
+    login: jest.fn(),
+    register: jest.fn(),
   };
 
-  const mockJwtAuthGuard = {
-    canActivate: jest.fn(() => true),
-  };
-
-  const mockLocalAuthGuard = {
-    canActivate: jest.fn(() => true),
-  };
-
-  const mockJwtService = {
-    sign: jest.fn(() => 'test-jwt-token'),
-  };
-
-  const mockConfigService = {
-    get: jest.fn((key: string) => {
-      if (key === 'NODE_ENV') {
-        return 'test';  
-      }
-    }),
+  const mockLoggerService = {
+    log: jest.fn(),
+    error: jest.fn(),
+    warn: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -49,19 +30,15 @@ describe('AuthController', () => {
           useValue: mockAuthService,
         },
         {
-          provide: JwtService,
-          useValue: mockJwtService,
-        },
-        {
-          provide: ConfigService,
-          useValue: mockConfigService,
+          provide: WinstonLoggerService, // Provide the mock logger service
+          useValue: mockLoggerService,
         },
       ],
     })
-      .overrideGuard(JwtAuthGuard)
-      .useValue(mockJwtAuthGuard)
       .overrideGuard(LocalAuthGuard)
-      .useValue(mockLocalAuthGuard)
+      .useValue({ canActivate: jest.fn(() => true) })
+      .overrideGuard(JwtAuthGuard)
+      .useValue({ canActivate: jest.fn(() => true) })
       .compile();
 
     authController = module.get<AuthController>(AuthController);
@@ -74,38 +51,48 @@ describe('AuthController', () => {
 
   describe('login', () => {
     it('should log in the user and return the user with a JWT cookie', async () => {
-      const mockUser = { id: 1, username: 'testuser' };
-      const mockRequest = { user: mockUser };
+      const mockRequest = {
+        user: { username: 'testuser', id: 1 },
+      };
       const mockResponse = {
         cookie: jest.fn(),
         send: jest.fn(),
       };
+      const mockToken = 'mockJwtToken';
+      const mockUser = { username: 'testuser', id: 1 };
+
+      mockAuthService.login.mockResolvedValue({ token: mockToken, user: mockUser });
 
       await authController.login(mockRequest, mockResponse);
 
-      expect(authService.login).toHaveBeenCalledWith(mockUser);
-      expect(mockResponse.cookie).toHaveBeenCalledWith('jwt', 'test-token', {
+      expect(mockAuthService.login).toHaveBeenCalledWith(mockRequest.user);
+      expect(mockResponse.cookie).toHaveBeenCalledWith('jwt', mockToken, {
         httpOnly: true,
-        secure: false, 
+        secure: process.env.NODE_ENV === 'production',
       });
       expect(mockResponse.send).toHaveBeenCalledWith(mockUser);
+      expect(mockLoggerService.log).toHaveBeenCalledWith(`User ${mockUser.username} logged in successfully`);
     });
   });
 
   describe('register', () => {
     it('should register a new user', async () => {
-      const mockUser: User = { id: 1, username: 'newuser', password: 'password' } as User;
+      const mockUser: User = { id: 1, username: 'newuser', password: 'password' } as User;     
+       mockAuthService.register.mockResolvedValue(mockUser);
 
       const result = await authController.register(mockUser);
 
-      expect(authService.register).toHaveBeenCalledWith(mockUser);
-      expect(result).toBe(mockUser);
+      expect(result).toEqual(mockUser);
+      expect(mockAuthService.register).toHaveBeenCalledWith(mockUser);
+      expect(mockLoggerService.log).toHaveBeenCalledWith(`Registered new user with ID: ${mockUser.id}`);
     });
   });
 
   describe('logout', () => {
     it('should log out the user and clear the JWT cookie', async () => {
-      const mockRequest = {};
+      const mockRequest = {
+        user: { username: 'testuser', id: 1 },
+      };
       const mockResponse = {
         clearCookie: jest.fn(),
         send: jest.fn(),
@@ -115,9 +102,10 @@ describe('AuthController', () => {
 
       expect(mockResponse.clearCookie).toHaveBeenCalledWith('jwt', {
         httpOnly: true,
-        secure: false, 
+        secure: process.env.NODE_ENV === 'production',
       });
       expect(mockResponse.send).toHaveBeenCalledWith({ message: 'Logged out successfully' });
+      expect(mockLoggerService.log).toHaveBeenCalledWith(`User ${mockRequest.user.username} logged out successfully`);
     });
   });
 });

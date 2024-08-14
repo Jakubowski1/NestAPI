@@ -6,7 +6,7 @@ import { User } from '../users/user.entity';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { LoginDto } from './dto/login.dto';
 import { WinstonLoggerService } from '../logger/logger.service';  
-import { UserAlreadyExistsException, InvalidCredentialsException, RegistrationFailedException } from '../exceptions/custom-exceptions';  
+import { InvalidCredentialsException, RegistrationFailedException, InternalServerErrorException } from '../exceptions/custom-exceptions';  
 
 
 @ApiTags('Auth')
@@ -56,11 +56,16 @@ export class AuthController {
   @ApiOperation({ summary: 'Log out' })
   async logout(@Request() req, @Response() res) {
     this.logger.log(`User ${req.user.username} attempting to log out`);
-    res.clearCookie('jwt', {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production', 
-    });
-    this.logger.log(`User ${req.user.username} logged out successfully`);
-    return res.send({ message: 'Logged out successfully' });
+    try {
+      res.clearCookie('jwt', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production', 
+      });
+      this.logger.log(`User ${req.user.username} logged out successfully`);
+      return res.send({ message: 'Logged out successfully' });
+    } catch (error) {
+      this.logger.error('Logout failed', error.stack);
+      throw new InternalServerErrorException('An unexpected error occurred during logout');
+    }
   }
 }

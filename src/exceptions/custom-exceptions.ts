@@ -22,3 +22,15 @@ export class RegistrationFailedException extends HttpException {
     super('User registration failed', HttpStatus.INTERNAL_SERVER_ERROR);
   }
 }
+
+export class PostNotFoundException extends HttpException {
+  constructor(id: number) {
+    super(`Post with ID ${id} not found`, HttpStatus.NOT_FOUND);
+  }
+}
+
+export class UnauthorizedPostAccessException extends HttpException {
+  constructor(action: string) {
+    super(`You are not authorized to ${action} this post`, HttpStatus.FORBIDDEN);
+  }
+}

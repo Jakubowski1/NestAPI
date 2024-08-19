@@ -6,11 +6,9 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 import { PostsModule } from './posts/posts.module';
 import { AuthModule } from './auth/auth.module';
-
-
 import { User } from './users/user.entity';
-import { LoggerService } from './logger/logger.service';
-import { LoggerModule } from './logger/logger.module';
+import { WinstonLoggerService as LoggerService} from './logger/logger.service';
+import { WinstonModule} from "nest-winston"
 
 
 import * as cookieParser from 'cookie-parser';
@@ -36,7 +34,8 @@ import JwtCookieMiddleware from './auth/jwt-cookie.middleware';
     UsersModule,
     PostsModule,
     AuthModule,
-    LoggerModule,
+    WinstonModule,
+    
     
   ],
   controllers: [AppController],

@@ -16,9 +16,17 @@ export class AppService implements OnModuleInit {
     user.password = 'user'; 
     user.role = 'user';
     user.posts = [];
-
     const createdUser = await this.usersService.create(user);
+
+    const adminUser = new User();
+    adminUser.username = 'admin';
+    adminUser.password = 'admin'; 
+    adminUser.role = 'admin';
+    adminUser.posts = [];
+    const createdAdminUser = await this.usersService.create(adminUser);
+
   }
+  
 
   getHello(): string {
     return 'Hello World!';

@@ -1,23 +1,23 @@
 import { DataSource } from 'typeorm';
+import { ConfigService } from '@nestjs/config';
 import { Post } from './posts/post.entity';
 import { User } from './users/user.entity';
-import { ConfigService } from '@nestjs/config';
+import * as dotenv from 'dotenv';
 
+dotenv.config();  // Load environment variables from .env file if not already loaded
+
+// Create a ConfigService instance to fetch environment variables
 const configService = new ConfigService();
-
+console.log('DATABASE_URL:', configService.get<string>('DATABASE_URL'));
 export const AppDataSource = new DataSource({
-  type: 'postgres',
-
-  // If DATABASE_URL is available, use it. Otherwise, use individual configs.
-  url: configService.get('DATABASE_URL') || undefined,
-
-  host: configService.get('DATABASE_HOST', 'localhost'),
-  port: configService.get<number>('DATABASE_PORT', 5432),
-  username: configService.get('DATABASE_USERNAME', 'postgres'),
-  password: configService.get('DATABASE_PASSWORD', 'admin'),
-  database: configService.get('DATABASE_NAME', 'postgres'),
-
+  type: 'postgres',  // Explicitly define the database type
+  host: configService.get<string>('PG_HOST', 'localhost'),
+  port: configService.get<number>('PG_PORT', 5432),
+  username: configService.get<string>('PG_USER', 'postgres'),
+  password: configService.get<string>('PG_PASSWORD', 'admin'),
+  database: configService.get<string>('PG_DB', 'postgres'),
   entities: [User, Post],
-  synchronize: false,  // Should be false in production to avoid unintentional schema changes
-  migrations: ['src/migrations/*.ts'],
+  migrations: [__dirname + '/migrations/**/*.ts'],
+  synchronize: configService.get<boolean>('TYPEORM_SYNC', false),  // Disable synchronize in production
+  url: configService.get<string>('DATABASE_URL') || undefined, // Use DATABASE_URL if available
 });

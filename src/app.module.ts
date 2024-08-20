@@ -3,14 +3,9 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { PostsModule } from './posts/posts.module';
 import { AuthModule } from './auth/auth.module';
-import { User } from './users/user.entity';
-import { WinstonLoggerService as LoggerService} from './logger/logger.service';
-import { WinstonModule} from "nest-winston"
-
-
 import * as cookieParser from 'cookie-parser';
 import JwtCookieMiddleware from './auth/jwt-cookie.middleware';
 
@@ -19,27 +14,29 @@ import JwtCookieMiddleware from './auth/jwt-cookie.middleware';
     ConfigModule.forRoot({
       isGlobal: true,
     }),
-    TypeOrmModule.forRoot({
-      type: process.env.DB_TYPE as any,
-      host: process.env.PG_HOST,
-      port: parseInt(process.env.PG_PORT, 10),
-      username: process.env.PG_USER,
-      password: process.env.PG_PASSWORD,
-      database: process.env.PG_DB,
-      entities: [__dirname + '/**/*.entity{.ts,.js}'],
-      migrations: ['src/migration/**/*.ts'],
-      synchronize: true,
+
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService) => ({
+        type: 'postgres',
+        host: configService.get<string>('PG_HOST'),
+        port: configService.get<number>('PG_PORT'),
+        username: configService.get<string>('PG_USER'),
+        password: configService.get<string>('PG_PASSWORD'),
+        database: configService.get<string>('PG_DB'),
+        entities: [__dirname + '/**/*.entity{.ts,.js}'],
+        migrations: [__dirname + '/migrations/**/*.ts'],
+        synchronize: configService.get<boolean>('TYPEORM_SYNC', false),
+      }),
+      inject: [ConfigService],
     }),
-    TypeOrmModule.forFeature([User]),
+
     UsersModule,
     PostsModule,
     AuthModule,
-    WinstonModule,
-    
-    
   ],
   controllers: [AppController],
-  providers: [AppService, LoggerService],
+  providers: [AppService],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {

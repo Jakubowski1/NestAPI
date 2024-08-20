@@ -24,7 +24,7 @@ import JwtCookieMiddleware from './auth/jwt-cookie.middleware';
         url: configService.get<string>('DATABASE_URL'), // Use DATABASE_URL from environment variables
         entities: [__dirname + '/**/*.entity{.ts,.js}'], // Adjust entity path according to your structure
         migrations: [__dirname + '/migrations/**/*.ts'], // Adjust migrations path if necessary
-        synchronize: configService.get<boolean>('TYPEORM_SYNC', false), // Recommended to disable in production
+        synchronize: true, // Recommended to disable in production
         ssl: {
           rejectUnauthorized: false,
         }, // Optional: for SSL configuration, depending on your database setup
